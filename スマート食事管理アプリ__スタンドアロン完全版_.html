@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スマート食事管理</title>
+  <style>
+    :root {
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --primary-light: #ecfdf5;
+      --bg: #f3f4f6;
+      --card-bg: #ffffff;
+      --text: #1f2937;
+      --text-muted: #6b7280;
+      --amber: #f59e0b;
+      --amber-bg: #fffbebf5;
+      --orange: #f97316;
+      --orange-bg: #fff7ed;
+      --indigo: #6366f1;
+      --indigo-bg: #eeef2ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding-bottom: 80px;
+    }
+
+    header {
+      background-color: var(--primary);
+      color: white;
+      padding: 14px 16px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-badge {
+      font-size: 0.75rem;
+      background: rgba(255,255,255,0.2);
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: normal;
+    }
+
+    main {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #374151;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #f3f4f6;
+      padding-bottom: 8px;
+    }
+
+    .btn-link {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      background: white;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+    }
+
+    .btn-search {
+      background: #0284c7;
+      white-space: nowrap;
+      width: auto;
+      padding: 8px 12px;
+    }
+
+    .btn-add {
+      background: var(--primary-dark);
+      white-space: nowrap;
+      width: auto;
+      padding: 8px 12px;
+    }
+
+    .target-box {
+      background: var(--primary-light);
+      border: 1px solid #a7f3d0;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .target-box .main-cal {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin: 2px 0;
+    }
+
+    .progress-bar-bg {
+      background: #d1fae5;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .progress-bar-fill {
+      background: var(--primary);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #4b5563;
+    }
+
+    /* 各食事セクション */
+    .meal-block {
+      border-left: 4px solid #ccc;
+      padding-left: 10px;
+      margin-top: 16px;
+    }
+
+    .meal-block.breakfast { border-color: var(--amber); }
+    .meal-block.lunch { border-color: var(--orange); }
+    .meal-block.dinner { border-color: var(--indigo); }
+
+    .meal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .items-list {
+      margin-bottom: 8px;
+    }
+
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f9fafb;
+      border: 1px solid #f3f4f6;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+    }
+
+    .btn-delete {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .input-box {
+      background: #f9fafb;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #eee;
+    }
+
+    .candidates-box {
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      max-height: 120px;
+      overflow-y: auto;
+      margin: 6px 0;
+      font-size: 0.75rem;
+    }
+
+    .candidate-item {
+      padding: 6px 8px;
+      border-bottom: 1px solid #f3f4f6;
+      display: flex;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .candidate-item:hover {
+      background: var(--primary-light);
+    }
+
+    .suggestion-card {
+      background: #fffbebf5;
+      border: 1px solid #fde68a;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      font-size: 0.8rem;
+    }
+
+    .suggestion-card h3 {
+      color: #b45309;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .history-card {
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 4px;
+      margin-bottom: 6px;
+    }
+
+    /* ボトムナビ */
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      z-index: 50;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      flex: 1;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .nav-btn.active {
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #toast {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #374151;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span>🥗 スマート食事管理</span>
+    <span class="header-badge">標準版</span>
+  </header>
+
+  <main>
+    <!-- タブ1: 記録 & おすすめ -->
+    <div id="tab-record">
+      
+      <!-- ユーザー設定 -->
+      <div class="card">
+        <div class="card-title">
+          <span>👤 ユーザー設定</span>
+          <button class="btn-link" onclick="toggleProfile()" id="toggle-profile-btn">編集する</button>
+        </div>
+
+        <div id="profile-form" class="hidden">
+          <div class="form-row">
+            <div class="form-group">
+              <label>年齢</label>
+              <input type="number" id="user-age" value="30">
+            </div>
+            <div class="form-group">
+              <label>性別</label>
+              <select id="user-gender">
+                <option value="male">男性</option>
+                <option value="female">女性</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>身長 (cm)</label>
+              <input type="number" id="user-height" value="170">
+            </div>
+            <div class="form-group">
+              <label>体重 (kg)</label>
+              <input type="number" id="user-weight" value="65">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>身体活動レベル</label>
+            <select id="user-activity">
+              <option value="1.2">低い (デスクワーク中心)</option>
+              <option value="1.55" selected>普通 (立ち仕事・適度な運動)</option>
+              <option value="1.725">高い (激しい運動・肉体労働)</option>
+            </select>
+          </div>
+          <button class="btn" onclick="calculateProfile()">設定を更新する</button>
+        </div>
+
+        <div class="target-box">
+          <div style="font-size: 0.75rem; color: #065f46;">1日の目標摂取カロリー</div>
+          <div class="main-cal"><span id="target-calories">2000</span> <span style="font-size: 0.8rem; font-weight: normal;">kcal</span></div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+          </div>
+          <div class="stats-row">
+            <span>摂取: <b id="total-consumed">0</b> kcal</span>
+            <span>残り: <b id="remaining-calories">2000</b> kcal</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 食事記録 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🍽 今日の食事記録</span>
+          <input type="date" id="meal-date" style="width: auto; padding: 2px 6px; font-size: 0.75rem;">
+        </div>
+
+        <!-- 朝食 -->
+        <div class="meal-block breakfast">
+          <div class="meal-header">
+            <span>🌅 朝食</span>
+            <span style="color: var(--amber);" id="breakfast-total">0 kcal</span>
+          </div>
+          <div class="items-list" id="breakfast-items-list"></div>
+          <div class="input-box">
+            <div class="form-row" style="margin-bottom: 6px;">
+              <input type="text" id="breakfast-input-item" placeholder="食品名 (例: トースト)">
+              <button class="btn btn-search" onclick="fetchCalorie('breakfast')">検索</button>
+            </div>
+            <div id="breakfast-candidates" class="candidates-box hidden"></div>
+            <div class="form-row">
+              <input type="number" id="breakfast-input-cal" placeholder="kcal">
+              <button class="btn btn-add" onclick="addFoodItem('breakfast')">追加</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 昼食 -->
+        <div class="meal-block lunch">
+          <div class="meal-header">
+            <span>☀️ 昼食</span>
+            <span style="color: var(--orange);" id="lunch-total">0 kcal</span>
+          </div>
+          <div class="items-list" id="lunch-items-list"></div>
+          <div class="input-box">
+            <div class="form-row" style="margin-bottom: 6px;">
+              <input type="text" id="lunch-input-item" placeholder="食品名 (例: カレー)">
+              <button class="btn btn-search" onclick="fetchCalorie('lunch')">検索</button>
+            </div>
+            <div id="lunch-candidates" class="candidates-box hidden"></div>
+            <div class="form-row">
+              <input type="number" id="lunch-input-cal" placeholder="kcal">
+              <button class="btn btn-add" onclick="addFoodItem('lunch')">追加</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 夕食 -->
+        <div class="meal-block dinner">
+          <div class="meal-header">
+            <span>🌙 夕食</span>
+            <span style="color: var(--indigo);" id="dinner-total">0 kcal</span>
+          </div>
+          <div class="items-list" id="dinner-items-list"></div>
+          <div class="input-box">
+            <div class="form-row" style="margin-bottom: 6px;">
+              <input type="text" id="dinner-input-item" placeholder="食品名 (例: 刺身定食)">
+              <button class="btn btn-search" onclick="fetchCalorie('dinner')">検索</button>
+            </div>
+            <div id="dinner-candidates" class="candidates-box hidden"></div>
+            <div class="form-row">
+              <input type="number" id="dinner-input-cal" placeholder="kcal">
+              <button class="btn btn-add" onclick="addFoodItem('dinner')">追加</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- おすすめ提案 -->
+      <div class="suggestion-card hidden" id="suggestion-card">
+        <h3>💡 メニュー提案・アドバイス</h3>
+        <div id="suggestion-content"></div>
+      </div>
+
+    </div>
+
+    <!-- タブ2: 履歴 -->
+    <div id="tab-history" class="hidden">
+      <div class="card">
+        <div class="card-title">📅 食事履歴一覧</div>
+        <div id="history-container"></div>
+      </div>
+    </div>
+  </main>
+
+  <nav>
+    <button class="nav-btn active" onclick="switchTab('tab-record', this)">✏️ 記録・提案</button>
+    <button class="nav-btn" onclick="switchTab('tab-history', this)">📅 履歴一覧</button>
+  </nav>
+
+  <div id="toast"></div>
+
+  <script>
+    let targetCalories = 2000;
+    let todayData = {
+      date: new Date().toISOString().split('T')[0],
+      breakfast: [],
+      lunch: [],
+      dinner: []
+    };
+
+    window.onload = function() {
+      document.getElementById('meal-date').value = todayData.date;
+      loadUserProfile();
+      calculateProfile();
+      loadTodayData();
+      loadHistory();
+
+      document.getElementById('meal-date').addEventListener('change', (e) => {
+        todayData.date = e.target.value;
+        loadTodayData();
+      });
+    };
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+    }
+
+    function toggleProfile() {
+      const form = document.getElementById('profile-form');
+      const btn = document.getElementById('toggle-profile-btn');
+      if (form.classList.contains('hidden')) {
+        form.classList.remove('hidden');
+        btn.innerText = '閉じる';
+      } else {
+        form.classList.add('hidden');
+        btn.innerText = '編集する';
+      }
+    }
+
+    function calculateProfile() {
+      const age = parseFloat(document.getElementById('user-age').value) || 30;
+      const gender = document.getElementById('user-gender').value;
+      const height = parseFloat(document.getElementById('user-height').value) || 170;
+      const weight = parseFloat(document.getElementById('user-weight').value) || 65;
+      const activity = parseFloat(document.getElementById('user-activity').value) || 1.55;
+
+      let bmr = (gender === 'male')
+        ? 66.47 + (13.75 * weight) + (5.00 * height) - (6.75 * age)
+        : 655.1 + (9.56 * weight) + (1.85 * height) - (4.68 * age);
+
+      targetCalories = Math.round(bmr * activity);
+      document.getElementById('target-calories').innerText = targetCalories;
+
+      localStorage.setItem('userProfile', JSON.stringify({ age, gender, height, weight, activity }));
+      updateProgress();
+      updateSuggestions();
+    }
+
+    function loadUserProfile() {
+      const saved = localStorage.getItem('userProfile');
+      if (saved) {
+        const p = JSON.parse(saved);
+        document.getElementById('user-age').value = p.age;
+        document.getElementById('user-gender').value = p.gender;
+        document.getElementById('user-height').value = p.height;
+        document.getElementById('user-weight').value = p.weight;
+        document.getElementById('user-activity').value = p.activity;
+      }
+    }
+
+    async function fetchCalorie(mealType) {
+      const inputEl = document.getElementById(`${mealType}-input-item`);
+      const calInputEl = document.getElementById(`${mealType}-input-cal`);
+      const query = inputEl.value.trim();
+      const candidatesBox = document.getElementById(`${mealType}-candidates`);
+
+      if (!query) {
+        showToast('食品名を入力してください');
+        return;
+      }
+
+      candidatesBox.classList.remove('hidden');
+      candidatesBox.innerHTML = '<div style="padding: 6px; color: #888;">検索中...</div>';
+
+      try {
+        const response = await fetch(`https://jp.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`);
+        const data = await response.json();
+        candidatesBox.innerHTML = '';
+        let found = false;
+
+        if (data.products && data.products.length > 0) {
+          data.products.forEach(prod => {
+            const name = prod.product_name_ja || prod.product_name || '名称不明';
+            const kcal = prod.nutriments && prod.nutriments['energy-kcal_100g'] ? Math.round(prod.nutriments['energy-kcal_100g']) : null;
+
+            if (kcal !== null) {
+              found = true;
+              const itemEl = document.createElement('div');
+              itemEl.className = 'candidate-item';
+              itemEl.innerHTML = `<span>${name.length > 15 ? name.slice(0, 15) + '...' : name}</span> <b>${kcal} kcal/100g</b>`;
+              itemEl.onclick = () => {
+                inputEl.value = name;
+                calInputEl.value = kcal;
+                candidatesBox.classList.add('hidden');
+                showToast('カロリーを反映しました');
+              };
+              candidatesBox.appendChild(itemEl);
+            }
+          });
+        }
+
+        if (!found) {
+          const fallbackDB = [
+            { name: "白米", cal: 240 }, { name: "玄米", cal: 220 }, { name: "食パン", cal: 160 },
+            { name: "ラーメン", cal: 500 }, { name: "カレー", cal: 750 }, { name: "うどん", cal: 380 },
+            { name: "サラダ", cal: 80 }, { name: "焼き魚", cal: 250 }, { name: "唐揚げ", cal: 300 }
+          ];
+          const match = fallbackDB.find(f => query.includes(f.name) || f.name.includes(query));
+          const estKcal = match ? match.cal : 300;
+
+          candidatesBox.innerHTML = `
+            <div style="padding: 4px; color: #d97706; font-size: 0.7rem;">※目安の数値:</div>
+            <div class="candidate-item"><span>${query} (目安)</span> <b>${estKcal} kcal</b></div>
+          `;
+          candidatesBox.querySelector('.candidate-item').onclick = () => {
+            calInputEl.value = estKcal;
+            candidatesBox.classList.add('hidden');
+          };
+        }
+      } catch (err) {
+        candidatesBox.innerHTML = '<div style="padding: 6px; color: #ef4444;">検索失敗。数値をご入力ください。</div>';
+      }
+    }
+
+    function addFoodItem(mealType) {
+      const itemInput = document.getElementById(`${mealType}-input-item`);
+      const calInput = document.getElementById(`${mealType}-input-cal`);
+      const item = itemInput.value.trim();
+      const cal = parseFloat(calInput.value) || 0;
+
+      if (!item) {
+        showToast('食品名を入力してください');
+        return;
+      }
+
+      if (!todayData[mealType]) todayData[mealType] = [];
+      todayData[mealType].push({ id: Date.now(), item, cal });
+
+      itemInput.value = '';
+      calInput.value = '';
+      document.getElementById(`${mealType}-candidates`).classList.add('hidden');
+
+      renderMealItems(mealType);
+      saveToStorage();
+      updateProgress();
+      updateSuggestions();
+      showToast('追加しました');
+    }
+
+    function removeFoodItem(mealType, id) {
+      todayData[mealType] = todayData[mealType].filter(x => x.id !== id);
+      renderMealItems(mealType);
+      saveToStorage();
+      updateProgress();
+      updateSuggestions();
+      showToast('削除しました');
+    }
+
+    function renderMealItems(mealType) {
+      const container = document.getElementById(`${mealType}-items-list`);
+      const totalSpan = document.getElementById(`${mealType}-total`);
+      const items = todayData[mealType] || [];
+      const totalCal = items.reduce((sum, x) => sum + x.cal, 0);
+
+      totalSpan.innerText = `${totalCal} kcal`;
+
+      if (items.length === 0) {
+        container.innerHTML = '<div style="font-size: 0.75rem; color: #9ca3af;">食品なし</div>';
+        return;
+      }
+
+      container.innerHTML = items.map(x => `
+        <div class="item-row">
+          <span>${x.item}</span>
+          <div>
+            <b>${x.cal} kcal</b>
+            <button class="btn-delete" onclick="removeFoodItem('${mealType}', ${x.id})">×</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateProgress() {
+      const bCal = (todayData.breakfast || []).reduce((sum, x) => sum + x.cal, 0);
+      const lCal = (todayData.lunch || []).reduce((sum, x) => sum + x.cal, 0);
+      const dCal = (todayData.dinner || []).reduce((sum, x) => sum + x.cal, 0);
+      const total = bCal + lCal + dCal;
+      const remaining = targetCalories - total;
+
+      document.getElementById('total-consumed').innerText = total;
+      document.getElementById('remaining-calories').innerText = remaining;
+
+      const percent = Math.min(Math.round((total / targetCalories) * 100), 100);
+      document.getElementById('progress-bar').style.width = percent + '%';
+    }
+
+    function updateSuggestions() {
+      const card = document.getElementById('suggestion-card');
+      const content = document.getElementById('suggestion-content');
+
+      const bCal = (todayData.breakfast || []).reduce((sum, x) => sum + x.cal, 0);
+      const lCal = (todayData.lunch || []).reduce((sum, x) => sum + x.cal, 0);
+      const dCal = (todayData.dinner || []).reduce((sum, x) => sum + x.cal, 0);
+
+      if (bCal > 0 && lCal === 0) {
+        card.classList.remove('hidden');
+        const rem = targetCalories - bCal;
+        const lunchTarget = Math.round(rem * 0.5);
+        content.innerHTML = `
+          朝食は <b>${bCal} kcal</b> でした。<br>
+          ☀️ <b>昼食目安: 約 ${lunchTarget} kcal</b><br>
+          (おすすめ: 和定食、サラダチキン＋おにぎりなど)
+        `;
+      } else if (bCal > 0 && lCal > 0 && dCal === 0) {
+        card.classList.remove('hidden');
+        const rem = Math.max(targetCalories - (bCal + lCal), 0);
+        content.innerHTML = `
+          本日ここまで <b>${bCal + lCal} kcal</b> 摂取済。<br>
+          🌙 <b>夕食目安: 約 ${rem} kcal</b><br>
+          (おすすめ: 刺身定食、豆腐ハンバーグ、野菜スープなど)
+        `;
+      } else if (bCal > 0 && lCal > 0 && dCal > 0) {
+        card.classList.remove('hidden');
+        content.innerHTML = `🎉 本日のすべての食事記録が完了しました！`;
+      } else {
+        card.classList.add('hidden');
+      }
+    }
+
+    function saveToStorage() {
+      let history = JSON.parse(localStorage.getItem('mealHistoryMulti') || '{}');
+      history[todayData.date] = { ...todayData };
+      localStorage.setItem('mealHistoryMulti', JSON.stringify(history));
+      loadHistory();
+    }
+
+    function loadTodayData() {
+      let history = JSON.parse(localStorage.getItem('mealHistoryMulti') || '{}');
+      if (history[todayData.date]) {
+        todayData = history[todayData.date];
+      } else {
+        todayData = { date: todayData.date, breakfast: [], lunch: [], dinner: [] };
+      }
+      ['breakfast', 'lunch', 'dinner'].forEach(m => renderMealItems(m));
+      updateProgress();
+      updateSuggestions();
+    }
+
+    function loadHistory() {
+      let history = JSON.parse(localStorage.getItem('mealHistoryMulti') || '{}');
+      const container = document.getElementById('history-container');
+      const dates = Object.keys(history).sort().reverse();
+
+      if (dates.length === 0) {
+        container.innerHTML = '<div style="font-size: 0.8rem; color: #888;">履歴はまだありません</div>';
+        return;
+      }
+
+      container.innerHTML = dates.map(d => {
+        const h = history[d];
+        const bCal = (h.breakfast || []).reduce((s, x) => s + x.cal, 0);
+        const lCal = (h.lunch || []).reduce((s, x) => s + x.cal, 0);
+        const dCal = (h.dinner || []).reduce((s, x) => s + x.cal, 0);
+        const fmt = (arr) => arr && arr.length ? arr.map(x => x.item).join(', ') : 'なし';
+
+        return `
+          <div class="history-card">
+            <div class="history-header">
+              <span>📅 ${d}</span>
+              <span style="color: var(--primary-dark);">${bCal + lCal + dCal} kcal</span>
+            </div>
+            <div>🌅 朝: ${fmt(h.breakfast)}</div>
+            <div>☀️ 昼: ${fmt(h.lunch)}</div>
+            <div>🌙 夜: ${fmt(h.dinner)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function switchTab(tabId, btn) {
+      document.getElementById('tab-record').classList.add('hidden');
+      document.getElementById('tab-history').classList.add('hidden');
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).classList.remove('hidden');
+      btn.classList.add('active');
+    }
+  </script>
+</body>
+</html>
